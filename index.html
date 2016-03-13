@@ -12,14 +12,27 @@
             <canvas class="camera__canvas"></canvas>
             <video autoplay class="camera__video"></video>
             <div class="controls">
-                <input id="invert_filter" class="controls__filter" type="radio" name="filter" value="invert" checked/>
-                <label for="invert_filter">Инвертировать</label>
-                <input id="grayscale_filter" class="controls__filter" type="radio" name="filter" value="grayscale" />
-                <label for="grayscale_filter">Оттенки серого</label>
-                <input id="threshold_filter" class="controls__filter" type="radio" name="filter" value="threshold" />
-                <label for="threshold_filter">Черно-белый</label>
-            <div class="fps"></div>
-        </div>
+                <div class="controls__buttons">
+                    <div class="controls__buttons_wrapper">
+                        <div class="controls__buttons_pause"></div><!--
+                        --><div class="controls__buttons_play"></div>
+                    </div>
+                </div>
+                <div class="controls__filter">
+                    <div class='controls__filter_previous'></div>
+                    <div class="controls__filter_container">
+                        <div class="filters_wrapper">
+                            <div class='controls__filter'>Без фильтра</div><!--
+                            --><div class='controls__filter'>Инвертировать</div><!--
+                            --><div class='controls__filter'>Черно-белый</div><!--
+                            --><div class='controls__filter'>Оттенки серого</div>
+                        </div>
+                    </div>
+                    <div class='controls__filter_next'></div>
+                </div>
+                <div class="controls__fps"></div>
+                <div class="controls__resolution"></div>
+            </div>
         </div>
     </div>    
 </body>
