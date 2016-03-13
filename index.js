@@ -1,8 +1,23 @@
-(function () {
-    var video = document.querySelector('.camera__video'),
-        canvas = document.querySelector('.camera__canvas');
+function start () {
+    var camera = document.querySelector('.camera'),
+        video = document.querySelector('.camera__video'),
+        canvas = document.querySelector('.camera__canvas'),
+        FPSBlock = document.querySelector('.fps'),
+        context = canvas.getContext('2d'),
+        filterName = '',
+        imageData = null,
+        width = 0,
+        height = 0,        
+        FPS = 0;
+        index = 0,
+        pixels = [],
+        filters = {
+            invert: invert,
+            threshold: threshold,
+            grayscale: grayscale
+        };
 
-    var getVideoStream = function (callback) {
+    function getVideoStream (callback) {
         navigator.getUserMedia = navigator.getUserMedia ||
             navigator.webkitGetUserMedia ||
             navigator.mozGetUserMedia;
@@ -10,12 +25,11 @@
         if (navigator.getUserMedia) {
             navigator.getUserMedia({video: true},
                 function (stream) {
-                    video.src = window.URL.createObjectURL(stream);
                     video.onloadedmetadata = function (e) {
                         video.play();
-
                         callback();
                     };
+                    video.src = window.URL.createObjectURL(stream);
                 },
                 function (err) {
                     console.log("The following error occured: " + err.name);
@@ -26,64 +40,82 @@
         }
     };
 
-    var applyFilterToPixel = function (pixel) {
-        var filters = {
-            invert: function (pixel) {
-                pixel[0] = 255 - pixel[0];
-                pixel[1] = 255 - pixel[1];
-                pixel[2] = 255 - pixel[2];
-
-                return pixel;
-            },
-            grayscale: function (pixel) {
-                var r = pixel[0];
-                var g = pixel[1];
-                var b = pixel[2];
-                var v = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-
-                pixel[0] = pixel[1] = pixel[2] = v;
-
-                return pixel;
-            },
-            threshold: function (pixel) {
-                var r = pixel[0];
-                var g = pixel[1];
-                var b = pixel[2];
-                var v = (0.2126 * r + 0.7152 * g + 0.0722 * b >= 128) ? 255 : 0;
-                pixel[0] = pixel[1] = pixel[2] = v;
-
-                return pixel;
-            }
-        };
-
-        var filterName = document.querySelector('.controls__filter').value;
-
-        return filters[filterName](pixel);
-    };
-
-    var applyFilter = function () {
-        for (var x = 0; x < canvas.width; x++) {
-            for (var y = 0; y < canvas.height; y++) {
-                var pixel = canvas.getContext('2d').getImageData(x, y, 1, 1);
-
-                pixel.data = applyFilterToPixel(pixel.data);
-
-                canvas.getContext('2d').putImageData(pixel, x, y);
-            }
+    function invert () {
+        for (index = 0; index < pixels.length; index += 4) {
+            pixels[index] = 255 - pixels[index];
+            pixels[index + 1] = 255 - pixels[index + 1];
+            pixels[index + 2] = 255 - pixels[index + 2];
         }
     };
 
-    var captureFrame = function () {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-
-        canvas.getContext('2d').drawImage(video, 0, 0);
-        applyFilter();
+    function threshold () {
+        for (index = 0; index < pixels.length; index += 4) {
+            pixels[index] = pixels[index + 1] = pixels[index + 2] = 
+                (0.2126 * pixels[index] + 0.7152 * pixels[index + 1] + 0.0722 * pixels[index + 2] >= 128) ? 255 : 0;
+        }
     };
 
-    getVideoStream(function () {
-        captureFrame();
+    function grayscale () {
+        for (index = 0; index < pixels.length; index += 4) {
+            pixels[index] = pixels[index + 1] = pixels[index + 2] = 
+                0.2126 * pixels[index] + 0.7152 * pixels[index + 1] + 0.0722 * pixels[index + 2];
+        }
+    };
 
-        setInterval(captureFrame, 16);
-    });
-})();
+    function applyFilter () {
+        try {
+            resizeCanvas();
+            context.drawImage(video, 0, 0, width, height);
+            imageData = context.getImageData(0, 0, width, height);
+            pixels = imageData.data;
+            filters[filterName]();
+            context.putImageData(imageData, 0, 0);
+            FPS++;
+        } finally {
+            window.requestAnimFrame(applyFilter);
+        }
+    };
+
+    function changeFilter (event) {
+        filterName = event.target.value;
+    };
+
+    function showFPS () {
+        FPSBlock.textContent = FPS + " fps";
+        FPS = 0;
+    };
+
+    function resizeCanvas () {
+        width = canvas.width = camera.offsetWidth;
+        height = canvas.height = camera.offsetHeight;
+    };
+
+    function init () {
+        window.requestAnimFrame = (function() {
+          return  window.requestAnimationFrame       ||
+                  window.webkitRequestAnimationFrame ||
+                  window.mozRequestAnimationFrame    ||
+                  function( callback ){
+                    window.setTimeout(callback, 1000 / 60);
+                  };
+        })();
+        var controlFilters = document.getElementsByClassName('controls__filter');
+        for (var i = 0; i < controlFilters.length; i++) {
+            controlFilters[i].addEventListener("change", changeFilter);
+            if (controlFilters[i].checked) {
+                filterName = controlFilters[i].value;
+            }
+        }
+        if (!filterName) 
+            filterName = 'grayscale';
+        width = canvas.width = camera.offsetWidth;
+        height = canvas.height = camera.offsetHeight;
+        window.addEventListener("resize", resizeCanvas);
+        setInterval(showFPS, 1000);
+        applyFilter();        
+    }
+
+    getVideoStream(init);
+};
+
+window.addEventListener("DOMContentLoaded", start);
