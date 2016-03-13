@@ -20,7 +20,13 @@ function start () {
         FPS = 0;
         index = 0,
         pixels = [],
-        filters = [noop, invert, threshold, grayscale];
+        filters = [
+            {filter: noop, name: "Без фильтра"}, 
+            {filter: invert, name: "Инвертировать"}, 
+            {filter: threshold, name: "Черно-белый"}, 
+            {filter: grayscale, name: "Оттенки серого"}
+        ];
+
 
     window.addEventListener("resize", resizeCanvas);
     select_next_filter_button.addEventListener("click", selectNextFilter);
@@ -92,7 +98,7 @@ function start () {
                 context.drawImage(video, 0, 0, width, height);
                 imageData = context.getImageData(0, 0, width, height);
                 pixels = imageData.data;
-                selectedFilter();
+                selectedFilter.filter();
                 context.putImageData(imageData, 0, 0);
                 FPS++;
             }
@@ -142,7 +148,17 @@ function start () {
         showResolution();
     };
 
+    function generateFilterTags() {
+        for (var i = 0; i < filters.length; i++) {
+            var element = document.createElement('div');
+            element.className = "controls__filter";
+            element.textContent = filters[i].name;
+            filters_wrapper.appendChild(element);
+        }
+    }
+
     function init () {
+        generateFilterTags();
         selectFilter(0);
         resizeCanvas();
         showFPS();
