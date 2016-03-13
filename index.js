@@ -24,7 +24,8 @@ function start () {
             {filter: noop, name: "Без фильтра"}, 
             {filter: invert, name: "Инвертировать"}, 
             {filter: threshold, name: "Черно-белый"}, 
-            {filter: grayscale, name: "Оттенки серого"}
+            {filter: grayscale, name: "Оттенки серого"},
+            {filter: sepia, name: "Сепия"}
         ];
 
 
@@ -89,6 +90,14 @@ function start () {
                 0.2126 * pixels[index] + 0.7152 * pixels[index + 1] + 0.0722 * pixels[index + 2];
         }
     };
+
+    function sepia() {
+        for (index = 0; index < pixels.length; index += 4) {
+            pixels[index] = 0.393 * pixels[index] + 0.769 * pixels[index + 1] + 0.189 * pixels[index + 2];
+            pixels[index + 1] = 0.349 * pixels[index] + 0.686 * pixels[index + 1] + 0.168 * pixels[index + 2];
+            pixels[index + 2] = 0.272 * pixels[index] + 0.534 * pixels[index + 1] + 0.131 * pixels[index + 2];
+        }
+    }
 
     function applyFilter () {
         try {
